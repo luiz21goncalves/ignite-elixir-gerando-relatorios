@@ -29,6 +29,8 @@ defmodule GenReport do
     "dezembro"
   ]
 
+  @years [2016, 2017, 2018, 2019, 2020]
+
   def build(filename) do
     filename
     |> Parser.parse_file()
@@ -37,30 +39,42 @@ defmodule GenReport do
 
   def build, do: {:error, "Insira o nome de um arquivo"}
 
-  defp sum_values([name, hours, _day, month, _year], %{
+  defp sum_values([name, hours, _day, month, year], %{
          "all_hours" => all_hours,
-         "hours_per_month" => hours_per_month
+         "hours_per_month" => hours_per_month,
+         "hours_per_year" => hours_per_year
        }) do
     all_hours = Map.put(all_hours, name, all_hours[name] + hours)
 
     working_hours_per_month =
       Map.put(hours_per_month[name], month, hours_per_month[name][month] + hours)
 
+    working_hours_per_year =
+      Map.put(hours_per_year[name], year, hours_per_year[name][year] + hours)
+
     hours_per_month = Map.put(hours_per_month, name, working_hours_per_month)
 
-    build_report(all_hours, hours_per_month)
+    hours_per_year = Map.put(hours_per_year, name, working_hours_per_year)
+
+    build_report(all_hours, hours_per_month, hours_per_year)
   end
 
   defp report_acc do
     people = Enum.into(@names, %{}, &{&1, 0})
     months = Enum.into(@months, %{}, &{&1, 0})
+    years = Enum.into(@years, %{}, &{&1, 0})
 
     hours_per_month = Enum.into(@names, %{}, &{&1, months})
+    hours_per_year = Enum.into(@names, %{}, &{&1, years})
 
-    build_report(people, hours_per_month)
+    build_report(people, hours_per_month, hours_per_year)
   end
 
-  defp build_report(all_hours, hours_per_month) do
-    %{"all_hours" => all_hours, "hours_per_month" => hours_per_month}
+  defp build_report(all_hours, hours_per_month, hours_per_year) do
+    %{
+      "all_hours" => all_hours,
+      "hours_per_month" => hours_per_month,
+      "hours_per_year" => hours_per_year
+    }
   end
 end
